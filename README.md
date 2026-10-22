@@ -1,4 +1,4 @@
-#Hololive Dreams Cube Counter
+# Cube Counter
 
 Counts gems from inventory screenshots. For each screenshot it finds which of the 6 slots hold a gem, works out the colour and size (small/big), reads the quantity printed under it with OCR, and adds everything up across all your images.
 
@@ -18,6 +18,56 @@ pip install pyunpack patool    # only if you have .7z files (zip needs nothing e
 
 - EasyOCR downloads its models the first time it runs, so you need internet for the first run.
 - It uses the GPU if one is available and falls back to CPU otherwise (set `USE_GPU = False` to force CPU). CPU works but is slower.
+
+## Capturing screenshots (Windows only, optional)
+
+`1080_macro_scrnsht.ahk` is an [AutoHotkey v2](https://www.autohotkey.com/) script that clicks through the game's pages and takes the screenshots for you. It is **Windows only**: it needs AutoHotkey and Windows' built-in **Win + PrtScn** screenshot shortcut, which saves each screenshot as a PNG in `C:\Users\<you>\Pictures\Screenshots` (named `Screenshot (180).png`, `Screenshot (181).png`, ...).
+
+### Before you run it
+- Install AutoHotkey **v2** (the script starts with `#Requires AutoHotkey v2.0`).
+- Run the game in **1080p (1920×1080)** and fill the screen. All click positions are absolute screen coordinates recorded at that size, and the counter's `CROP_BOX` and templates assume 1080p screenshots too. A different resolution means clicks land in the wrong place and the crop misses the gems.
+- The game window must be titled `hololive-Dreams` (Unity window). If it isn't found, the script silently does nothing.
+- Start from the game screen the first click expects, then watch one full cycle to confirm every click lands correctly.
+
+### Controls
+| Key | Action |
+|---|---|
+| `F1` | Start / stop the macro. Stopping takes effect within about 50 ms, between steps. |
+| `F6` | Quit the script completely. |
+
+While it runs, a "Macro Started" tooltip stays on screen. It shows up in the screenshots, but in the top-left of the dialog, above the area `CROP_BOX` keeps.
+
+### What one cycle does
+Each cycle clicks, in order (names match the comments in the script):
+
+1. `#next` at (1858, 554)
+2. `#holomemboard` at (414, 564), as a double-click
+3. `#reset` at (534, 988), as a burst of **10–21 quick clicks** (randomised, mostly 10–17)
+4. Presses **Win + PrtScn** to save a screenshot of the "Reset the Holomem Board?" dialog
+5. `#exit reset` at (1555, 161) to close the dialog, then presses `Esc`
+
+It never clicks the dialog's own Reset button. It only opens the dialog to capture the materials list, then closes it.
+
+Delays between steps are randomised (about 0.8–2 s each), so a cycle takes roughly 6–12 seconds. The mouse glides to each target with a little random jitter.
+
+### Settings at the top of the script
+| Setting | Meaning |
+|---|---|
+| `MouseSpeedMultiplier` | How fast the cursor glides (higher = faster). Default `8`. |
+| Click coordinates | The `SmoothClick(x, y)` lines in `PerformMacroTasks()`. Change them if your layout differs. |
+| Burst sizes | The `Random(10, 13)` / `Random(14, 17)` / `Random(18, 21)` lines for the `#reset` click. |
+
+### Loop counter
+Every cycle adds 1 to a number stored in the Windows registry at `HKEY_CURRENT_USER\SOFTWARE\1080_macro_scrnsht.ahk` (value `i`). It is never reset automatically, so it counts cycles across all runs, not just the current one. Delete that registry value if you want to start from 0.
+
+### Then count the gems
+When you've finished, zip (or just point at) the contents of `Pictures\Screenshots` and feed them to the counter:
+
+```bash
+python cube_counter.py Screenshots.zip
+```
+
+Remove any unrelated screenshots from that folder first, since every image in it is counted.
 
 ## Usage
 
@@ -50,10 +100,12 @@ screenshots
    ▼
 cropped strips
    │  count_gems()               one image at a time:
-   │     apply_color_thresholds()    HSV colour masks
-   │     detect_gems_by_grid()       which slot has which colour
+   │     find_occupied_slots()       which slots hold an item (last one = orb, skipped)
+   │     apply_color_thresholds()    HSV colour masks (default)
+   │     detect_gems_by_grid()       colour per slot + small/big from the gem's shape
+   │       or detect_gems_by_template()   match slots to saved gem icons (alternative)
    │     ocr_all_slots()             read the number under each gem
-   │     label_gem_sizes()           small / big, build inventory
+   │     build_inventory()           {"red small": 4100, ...}
    ▼
 cumulative_gem_count()           sum all images → totals
    ▼
@@ -65,8 +117,10 @@ Each stage is its own function, so you can edit or replace one without touching 
 ### Assumptions the detection makes
 
 - The cropped strip is split into **6 equal-width slots**.
-- Each colour occupies a **small + big pair** of slots. If a colour appears in two slots, the left one is small and the right one is big. If it appears in only one, even slot index = small, odd = big.
-- The quantity is printed in the **bottom 20%** of each slot.
+- The quantity pill sits under each gem, at roughly **72–90%** of the strip height.
+- Gems fill slots from the left with no gaps, and **the last item is always the orb**, which is skipped (`ORB_IS_LAST_ITEM`). Slots can shift when a gem type is missing, e.g. blue small, blue big, green small, yellow small, yellow big, orb.
+- A slot counts as occupied if its light quantity pill is present.
+- **Small vs big comes from shape, not position or pixel count.** Small gems are diamonds (solidity ~0.98), big gems are 4-point stars (~0.7–0.85). Raw pixel counts overlap too much between sizes to be reliable.
 
 If your screenshots are laid out differently, change the config values below.
 
@@ -76,17 +130,41 @@ Everything you're likely to tweak is in the `CONFIG` block at the top of the scr
 
 | Setting | Meaning |
 |---|---|
-| `CROP_BOX` | `(left, top, right, bottom)` crop applied to full screenshots |
+| `CROP_BOX` | `(left, top, right, bottom)` crop applied to full screenshots (set for 1920×1080) |
 | `NUM_SLOTS` | Number of slot columns (6) |
-| `MIN_SLOT_PCT` | % of a slot's pixels that must match a colour to count as a gem |
-| `TEXT_ROI_TOP_FRAC` | Where the quantity text starts vertically (0.80 = bottom 20%) |
+| `DETECTOR` | `"color"` (default) or `"template"` |
+| `GEM_ZONE_BOTTOM_FRAC` | Colour masks only look at the top part of the strip (the gem tile), so the blue digits can't read as a blue gem |
+| `PILL_ZONE_FRAC`, `PILL_MIN_FRAC` | Where to look for the quantity pill, and how much of it must be present, to call a slot occupied |
+| `ORB_IS_LAST_ITEM` | Skip the last occupied slot (the orb) |
+| `SIZE_SOLIDITY_THRESHOLD` | Shape cutoff: at or above = small diamond, below = big star |
+| `TEMPLATE_DIR` | Folder of saved gem icons |
+| `TEMPLATE_MIN_SCORE` | Match score (0–1) a slot needs to count as a gem |
+| `SLOT_TEMPLATE_BOX` | Which patch of the gem tile is saved as a template |
+| `MIN_SLOT_PCT` | `"color"` mode: % of a slot's pixels that must match a colour |
+| `TEXT_ROI_TOP_FRAC` | Where the quantity text starts vertically (0.72 = 72% down the strip) |
 | `TEXT_ROI_TRIM_X_FRAC` | Side margin trimmed off each slot before OCR (drops the capsule border) |
 | `OCR_UPSCALE` | How much the text crop is enlarged before OCR |
 | `OCR_ALLOWLIST` | Characters OCR is allowed to return |
+| `OCR_SKIP_DETECTION` | Skip EasyOCR's text-finding step and only recognise (faster; falls back to the full read if it errors) |
 | `USE_GPU` | Use the GPU for OCR if available |
 | `LABEL_ORDER`, `EMOJI` | Output order and emoji |
 
-## Tuning colours
+## Template setup (optional alternative)
+
+This is only needed if you set `DETECTOR = "template"`. That detector compares each slot with saved icons of the 8 gems (4 colours × small/big). Anything that doesn't match, like an empty slot or the orb tile, is ignored. Create the templates once from screenshots that between them show every gem:
+
+```python
+make_templates("Screenshot (180).png", ["red small", "red big", "green small", "green big"])
+make_templates("Screenshot (182).png", ["blue small", "blue big", None, "yellow small", "yellow big"])
+```
+
+Give the labels left to right, one per slot, and use `None` for slots to skip (empty slots, the orb, a gem you already saved). The templates are saved to `gem_templates/`. In Colab that folder disappears when the runtime resets, so re-run this each session or copy the folder to Google Drive.
+
+Templates assume the same screen resolution and `CROP_BOX` as the screenshots you made them from. If you change resolution, make new templates.
+
+## Tuning colours (`DETECTOR = "color"`)
+
+If an occupied slot matches no colour, the script prints `WARNING: slot N has an item but no colour matched` instead of silently dropping it. That warning is your cue to adjust the bounds below.
 
 Colour detection lives in `get_tuned_gem_bounds()`. Values are OpenCV HSV (H: 0–179, S: 0–255, V: 0–255).
 
@@ -107,6 +185,12 @@ Red is the tricky one. Its hue sits at both ends of the scale (roughly 0–10 an
 2. Open `debug_output/<name>_mask_<color>.png`. White = pixels matched. If a gem isn't white, the bounds are too tight. If background is white, they're too loose.
 3. Check the printed `Slot %` lines. A slot needs at least `MIN_SLOT_PCT` to count as a gem.
 4. Adjust the bounds and repeat.
+
+## Debugging detection
+
+With `--debug` in colour mode, each detected slot prints its colour match % and shape solidity, e.g. `slot 1: red big (colour 15.8%, solidity 0.81)`. If a size is wrong, compare its solidity to `SIZE_SOLIDITY_THRESHOLD`.
+
+In template mode, each slot prints its best match and score, e.g. `slot 4: best 'blue small' score 0.23 (below threshold, ignored)`. Real gems should score close to 1.00 and non-gems well under `TEMPLATE_MIN_SCORE`. If a real gem scores low, make a new template from it.
 
 ## Debugging OCR
 
@@ -132,9 +216,14 @@ cc.print_totals(totals)
 |---|---|
 | `extracted_images/` | Unpacked archives, one subfolder per archive |
 | `cropped_output/` | Cropped strips (duplicate filenames get `_2`, `_3`, …) |
-| `debug_output/` | Only with `--debug`: masks and OCR crops |
+| `gem_templates/` | Gem icons for template detection (created by `make_templates`, never deleted automatically) |
+| `debug_output/` | Only with `--debug`: OCR crops, plus colour masks in colour mode |
 
 `extracted_images/` and `cropped_output/` are **deleted and recreated at the start of every run** so old files are never counted. Don't keep anything in them. (With `--no-crop`, `cropped_output/` is left alone, so you can point the script at it.)
+
+## Speed
+
+OCR is the slow part. On a CPU-only runtime EasyOCR can take seconds per number, and low RAM use is normal because it is compute-bound, not memory-bound. Use a GPU runtime if you can, and keep `OCR_SKIP_DETECTION = True`. The first run is also slower because EasyOCR downloads and loads its models once per session.
 
 ## Limitations
 
