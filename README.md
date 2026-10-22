@@ -1,4 +1,4 @@
-#Hololive Dreams Cube Counter
+# Hololive Dreams Cube Counter
 
 Counts gems from inventory screenshots. For each screenshot it finds which of the 6 slots hold a gem, works out the colour and size (small/big), reads the quantity printed under it with OCR, and adds everything up across all your images.
 
