@@ -1,0 +1,260 @@
+{
+  "source_images": 54,
+  "per_image": {
+    "Screenshot (180).png": {
+      "red small": 4100,
+      "red big": 325,
+      "green small": 820,
+      "green big": 50
+    },
+    "Screenshot (181).png": {
+      "red small": 4100,
+      "red big": 325,
+      "green small": 100
+    },
+    "Screenshot (182).png": {
+      "blue small": 1800,
+      "blue big": 160,
+      "yellow small": 210,
+      "yellow big": 10,
+      "green small": 260
+    },
+    "Screenshot (183).png": {
+      "blue small": 1500,
+      "blue big": 85,
+      "green small": 860,
+      "green big": 50
+    },
+    "Screenshot (184).png": {
+      "blue small": 1500,
+      "blue big": 85,
+      "yellow small": 40,
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (185).png": {
+      "blue small": 1500,
+      "blue big": 85,
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (186).png": {
+      "blue small": 1800,
+      "blue big": 160,
+      "green small": 100
+    },
+    "Screenshot (187).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 860,
+      "green big": 50
+    },
+    "Screenshot (188).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 860,
+      "green big": 50
+    },
+    "Screenshot (189).png": {
+      "blue small": 810,
+      "blue big": 35,
+      "yellow small": 100,
+      "green small": 100
+    },
+    "Screenshot (190).png": {
+      "blue small": 1300,
+      "blue big": 85,
+      "green small": 100
+    },
+    "Screenshot (191).png": {
+      "yellow small": 1100,
+      "yellow big": 60,
+      "green small": 100
+    },
+    "Screenshot (192).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 100
+    },
+    "Screenshot (193).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 100
+    },
+    "Screenshot (194).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 100
+    },
+    "Screenshot (195).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 100
+    },
+    "Screenshot (196).png": {
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 100
+    },
+    "Screenshot (197).png": {
+      "yellow small": 570,
+      "yellow big": 35,
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (198).png": {
+      "yellow small": 430,
+      "yellow big": 10,
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (199).png": {
+      "blue small": 210,
+      "blue big": 10,
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (200).png": {
+      "blue small": 510,
+      "blue big": 10,
+      "green small": 20
+    },
+    "Screenshot (201).png": {
+      "yellow small": 60,
+      "green small": 860,
+      "green big": 50
+    },
+    "Screenshot (202).png": {
+      "yellow small": 270,
+      "yellow big": 10,
+      "green small": 100
+    },
+    "Screenshot (203).png": {
+      "yellow small": 60,
+      "green small": 860,
+      "green big": 50
+    },
+    "Screenshot (204).png": {
+      "red small": 225,
+      "red big": 5,
+      "green small": 100
+    },
+    "Screenshot (205).png": {
+      "yellow small": 60,
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (206).png": {
+      "green small": 860,
+      "green big": 50
+    },
+    "Screenshot (207).png": {
+      "green small": 540,
+      "green big": 50
+    },
+    "Screenshot (208).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (209).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (210).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (211).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (212).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (213).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (214).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (215).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (216).png": {
+      "yellow small": 60,
+      "green small": 100
+    },
+    "Screenshot (217).png": {
+      "green small": 100
+    },
+    "Screenshot (218).png": {
+      "green small": 100
+    },
+    "Screenshot (219).png": {
+      "green small": 100
+    },
+    "Screenshot (220).png": {
+      "green small": 100
+    },
+    "Screenshot (221).png": {
+      "green small": 100
+    },
+    "Screenshot (222).png": {
+      "green small": 100
+    },
+    "Screenshot (223).png": {
+      "green small": 100
+    },
+    "Screenshot (224).png": {
+      "green small": 100
+    },
+    "Screenshot (225).png": {
+      "green small": 100
+    },
+    "Screenshot (226).png": {
+      "green small": 100
+    },
+    "Screenshot (227).png": {
+      "green small": 100
+    },
+    "Screenshot (228).png": {
+      "green small": 100
+    },
+    "Screenshot (229).png": {
+      "green small": 100
+    },
+    "Screenshot (230).png": {
+      "green small": 100
+    },
+    "Screenshot (231).png": {
+      "green small": 100
+    },
+    "Screenshot (232).png": {
+      "green small": 100
+    },
+    "Screenshot (235).png": {
+      "red small": 4100,
+      "red big": 325,
+      "yellow small": 1000,
+      "yellow big": 35,
+      "green small": 100
+    }
+  },
+  "totals": {
+    "red small": 12525,
+    "red big": 980,
+    "blue small": 10930,
+    "blue big": 715,
+    "yellow small": 11440,
+    "yellow big": 405,
+    "green small": 13840,
+    "green big": 700
+  },
+  "flagged": [],
+  "unreviewed": [],
+  "skipped": []
+}
