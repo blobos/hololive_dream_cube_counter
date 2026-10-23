@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+extracted_images/
+cropped_output/
+debug_output/
+debug_one/
+labels.json
+labels.ocr_prefill.json
+holocube.7z
