@@ -75,8 +75,11 @@ TEXT_ROI_TRIM_X_FRAC = 0.15   # trim 15% off each side to drop the capsule borde
 OCR_UPSCALE = 3
 OCR_ALLOWLIST = "0123456789.kK"
 USE_GPU = True                # EasyOCR falls back to CPU on its own if no CUDA
-OCR_SKIP_DETECTION = True     # each slot is already cropped to one number, so skip EasyOCR's slow
-                              # text-finding step and only run recognition (much faster on CPU)
+# Text detection (reader.readtext) must stay on. Recognition-only
+# (reader.recognize) treats the whole crop as one line of text and reads the
+# rounded ends of the quantity pill as extra digits: "325" came back as
+# "43250", "820" as "08200", "50" as "6500". Detection crops to the text line
+# first and fixes all of them, for ~70 ms per slot instead of ~10 ms.
 
 # How gems are identified:
 #   "color"    = HSV colour masks (see get_tuned_gem_bounds); size (small/big) is
@@ -382,24 +385,24 @@ def ocr_slot_quantity(img_bgr, slot_index, num_slots=NUM_SLOTS):
     processed = preprocess_slot_text(img_bgr, slot_index, num_slots)
 
     reader = get_reader()
-    results = None
-
-    if OCR_SKIP_DETECTION:
-        try:
-            # recognize() treats the whole crop as one line of text
-            results = reader.recognize(processed, allowlist=OCR_ALLOWLIST, detail=0)
-        except Exception as e:
-            print(f"  recognize() failed ({e}); falling back to readtext()")
-
-    if results is None:
-        results = reader.readtext(
-            processed,
-            allowlist=OCR_ALLOWLIST,
-            detail=0,
-            text_threshold=0.5,
-            low_text=0.3,
-        )
+    results = reader.readtext(
+        processed,
+        allowlist=OCR_ALLOWLIST,
+        detail=0,
+        text_threshold=0.5,
+        low_text=0.3,
+    )
     raw_text = "".join(results)
+
+    if not raw_text:
+        # Nothing at all was found: recognition-only mode can still answer,
+        # because it has no detector that could have missed the line.
+        try:
+            raw_text = "".join(reader.recognize(processed, allowlist=OCR_ALLOWLIST,
+                                                detail=0))
+        except Exception as e:
+            print(f"  recognize() fallback failed ({e})")
+
     return parse_quantity(raw_text), raw_text, processed
 
 
@@ -436,6 +439,24 @@ def build_inventory(slots):
 def save_debug_image(debug_dir, filename, img):
     os.makedirs(debug_dir, exist_ok=True)
     cv2.imwrite(os.path.join(debug_dir, filename), img)
+
+
+def auto_crop_box(image_path, crop_box=CROP_BOX):
+    """
+    CROP_BOX for a full screenshot, None for an image that is already a strip.
+
+    Lets every caller (CLI, labeller, tests) feed the pipeline the same way::
+
+        crop = cc.auto_crop_box(path)
+        slots, inventory = cc.count_gems(path, crop_box=crop)
+    """
+    img = cv2.imread(str(image_path))
+    if img is None:
+        raise FileNotFoundError(f"Could not read image: {image_path}")
+    left, top, right, bottom = crop_box
+    if img.shape[1] == right - left and img.shape[0] == bottom - top:
+        return None
+    return crop_box
 
 
 def count_gems(image_path, crop_box=None, min_pct_threshold=MIN_SLOT_PCT, debug=False):
