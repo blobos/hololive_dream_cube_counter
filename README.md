@@ -148,7 +148,6 @@ Everything you're likely to tweak is in the `CONFIG` block at the top of the scr
 | `TEXT_ROI_TRIM_X_FRAC` | Side margin trimmed off each slot before OCR (drops the capsule border) |
 | `OCR_UPSCALE` | How much the text crop is enlarged before OCR |
 | `OCR_ALLOWLIST` | Characters OCR is allowed to return |
-| `OCR_SKIP_DETECTION` | Skip EasyOCR's text-finding step and only recognise (faster; falls back to the full read if it errors) |
 | `USE_GPU` | Use the GPU for OCR if available |
 | `LABEL_ORDER`, `EMOJI` | Output order and emoji |
 
@@ -199,6 +198,48 @@ In template mode, each slot prints its best match and score, e.g. `slot 4: best 
 
 With `--debug`, each OCR read prints like `slot 2: OCR '1K' -> 1000`, and the exact image the OCR saw is saved as `debug_output/<name>_slot<N>_ocr.png`. If numbers are misread, look at that image first, then adjust `TEXT_ROI_TOP_FRAC`, `TEXT_ROI_TRIM_X_FRAC`, or `OCR_UPSCALE`.
 
+`python debug_one.py <screenshot>` puts every stage of one image side by side (crop, colour masks, per-slot percentages, size contours, the OCR crop, and the raw text), both as separate PNGs and as one contact sheet.
+
+**Don't turn text detection off.** EasyOCR's `recognize()` treats the whole crop as a single line, and the rounded ends of the quantity pill get read as digits: `325` comes back as `43250`, `820` as `08200`, `50` as `6500`. `readtext()` finds the text line first and reads all of them correctly.
+
+## Checking the numbers by hand
+
+`label_gems.py` is a small tkinter window for typing in what the slots actually say, so the pipeline can be checked against something known.
+
+```bash
+python label_gems.py                                  # opens on the first unlabelled screenshot
+python label_gems.py --build-prefill ~/Downloads/holocube   # cache what the pipeline reads, then exit
+python label_gems.py --prefill ocr                    # start with the pipeline's values filled in
+python label_gems.py --export tests/fixtures/holocube_expected.json
+```
+
+The image is shown at the top with the six slots numbered underneath; below it are the eight gem fields (red/blue/yellow/green × small/big), each with a thumbnail of the tile the pipeline assigned to that label. Type the number you see — `4100`, `4.1K` and `1,800` all work — and leave a field blank when that gem isn't there.
+
+| Key | Action |
+|---|---|
+| `Tab` / `Shift+Tab` | next / previous field |
+| `Enter` | save and go to the next image |
+| `Shift+Enter` | save and go to the previous image |
+| `Ctrl+E` | this screenshot has no gems: save and move on |
+| `Ctrl+K` | skip this screenshot (not counted either way) |
+| `F2` | flag it: the detection looks wrong |
+| `F3` | show/hide what the pipeline read, next to each field |
+| `Ctrl+S` | save now |
+| `Ctrl+G` | jump to an image number |
+| `Ctrl+=` / `Ctrl+-` | zoom the image |
+| `Esc` | save and quit |
+
+Progress goes to `labels.json` on every keystroke, so quitting loses nothing, and `Enter` refuses to advance while a field is unreadable or the image is empty (that's what `Ctrl+E` is for). `--export` writes the answer key and prints where the pipeline and you disagree, value by value.
+
+## Tests
+
+```bash
+pip install pytest
+python -m pytest tests -q
+```
+
+The fast tests cover quantity parsing, the colour/size decision (on strips drawn in code, so they need no screenshots) and the answer-key export. Once `tests/fixtures/holocube_expected.json` exists — that is what `label_gems.py --export` writes — `tests/test_pipeline_fixture.py` runs the real pipeline over the hand-labelled screenshots and fails on any value that disagrees. Set `HOLOCUBE_DIR` if those screenshots aren't in `~/Downloads/holocube`.
+
 ## Use from Python
 
 The pipeline functions can be imported without running the CLI:
@@ -226,7 +267,7 @@ cc.print_totals(totals)
 
 ## Speed
 
-OCR is the slow part. On a CPU-only runtime EasyOCR can take seconds per number, and low RAM use is normal because it is compute-bound, not memory-bound. Use a GPU runtime if you can, and keep `OCR_SKIP_DETECTION = True`. The first run is also slower because EasyOCR downloads and loads its models once per session.
+OCR is the slow part. On a CPU-only runtime EasyOCR can take seconds per number, and low RAM use is normal because it is compute-bound, not memory-bound. Use a GPU runtime if you can. Measured here on CPU: ~70 ms per number with text detection on (the correct setting) versus ~10 ms with it off (which misreads the pill edges). The first run is also slower because EasyOCR downloads and loads its models once per session.
 
 ## Limitations
 
