@@ -2,7 +2,7 @@
 
 Counts gems from inventory screenshots. For each screenshot it finds which of the 6 slots hold a gem, works out the colour and size (small/big), reads the quantity printed under it with OCR, and adds everything up across all your images.
 
-> **Don't want to set anything up?** Open the notebook in [Google Colab](https://colab.research.google.com/) and run the first 2 cells. You only need your screenshots (or a zip of them).
+> **Don't want to set anything up?** Open [`cube_counter.ipynb`](cube_counter.ipynb) in [Google Colab](https://colab.research.google.com/), run the cells top to bottom and use the UI at the bottom. You only need your screenshots (or a zip / 7z of them).
 <img width="920" height="1123" alt="image" src="https://github.com/user-attachments/assets/d44456d6-b894-4d7e-a239-06f8c7772285" />
 
 ```
