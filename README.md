@@ -22,7 +22,7 @@ pip install py7zr              # only if you have .7z files (zip needs nothing e
 `.7z` files are read with [py7zr](https://pypi.org/project/py7zr/), which is pure Python, so no 7-Zip program has to be installed. If py7zr is not available the script falls back to `pyunpack` / `patool`, and those do need an external unpacker (`7z`, `7zz` or `unar`) on your `PATH` — without one they fail with `patool can not unpack`.
 
 - EasyOCR downloads its models the first time it runs, so you need internet for the first run.
-- It uses the GPU if one is available and falls back to CPU otherwise (set `USE_GPU = False` to force CPU). CPU works but is slower.
+- It uses the GPU if one is available and falls back to CPU otherwise (set `USE_GPU = False` to force CPU; in the notebook the **CPU or GPU** cell shows the device you got and lets you flip it). CPU works but is slower.
 
 ## Capturing screenshots (Windows only, optional)
 
