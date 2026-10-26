@@ -1,18 +1,16 @@
 # Hololive Dreams Cube Counter
+Counts Cubes in current membership board and then add cubes from your inventory manually.
+
+**TL;DR Instructions:** You take screenshots of game in 1080x1920 (use autohotkey script provided or do it manually), zip 'em up, then run py or notebook(colab), upload your zips and click Count Gems.
+
+
+
+> **Don't want to set anything up?** Open [`cube_counter.ipynb`](cube_counter.ipynb) in [Google Colab](https://colab.research.google.com/), run the cells top to bottom and use the UI at the bottom. You only need your screenshots (or a zip / 7z of them).
+<img width="649" height="1242" alt="image" src="https://github.com/user-attachments/assets/e5b1783f-d83c-4db9-9020-6e1aaf9ac7fd" />
 
 Counts gems from inventory screenshots. For each screenshot it finds which of the 6 slots hold a gem, works out the colour and size (small/big), reads the quantity printed under it with OCR, and adds everything up across all your images.
 
-> **Don't want to set anything up?** Open [`cube_counter.ipynb`](cube_counter.ipynb) in [Google Colab](https://colab.research.google.com/), run the cells top to bottom and use the UI at the bottom. You only need your screenshots (or a zip / 7z of them).
-<img width="920" height="1123" alt="image" src="https://github.com/user-attachments/assets/d44456d6-b894-4d7e-a239-06f8c7772285" />
-
-```
-🔴 red small: 146,429
-🟥 red big: 176
-🔵 blue small: 1,767
-...
-```
-
-## Install
+## Install (if not using colab)
 
 ```bash
 pip install easyocr opencv-python numpy Pillow
