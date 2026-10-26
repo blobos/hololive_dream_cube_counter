@@ -16,8 +16,10 @@ Counts gems from inventory screenshots. For each screenshot it finds which of th
 
 ```bash
 pip install easyocr opencv-python numpy Pillow
-pip install pyunpack patool    # only if you have .7z files (zip needs nothing extra)
+pip install py7zr              # only if you have .7z files (zip needs nothing extra)
 ```
+
+`.7z` files are read with [py7zr](https://pypi.org/project/py7zr/), which is pure Python, so no 7-Zip program has to be installed. If py7zr is not available the script falls back to `pyunpack` / `patool`, and those do need an external unpacker (`7z`, `7zz` or `unar`) on your `PATH` — without one they fail with `patool can not unpack`.
 
 - EasyOCR downloads its models the first time it runs, so you need internet for the first run.
 - It uses the GPU if one is available and falls back to CPU otherwise (set `USE_GPU = False` to force CPU). CPU works but is slower.
@@ -74,7 +76,7 @@ Remove any unrelated screenshots from that folder first, since every image in it
 
 ## Usage
 
-Pass any mix of `.zip` / `.7z` files and folders. Zips inside zips are opened too.
+Pass any mix of `.zip` / `.7z` files and folders. Arbitrary nesting is handled too: zips inside zips and archives inside folders are opened as well.
 
 ```bash
 python cube_counter.py Screenshots.zip
@@ -96,7 +98,7 @@ At the end it asks for extra gems to add by hand (one prompt per gem type, press
 
 ```
 zips / folders
-   │  expand_archives()          extract zips (including nested ones)
+   │  expand_archives()          extract archives (including nested ones)
    ▼
 screenshots
    │  crop_images()              crop to the gem strip using CROP_BOX
@@ -238,7 +240,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-The fast tests cover quantity parsing, the colour/size decision (on strips drawn in code, so they need no screenshots) and the answer-key export. Once `tests/fixtures/holocube_expected.json` exists — that is what `label_gems.py --export` writes — `tests/test_pipeline_fixture.py` runs the real pipeline over the hand-labelled screenshots and fails on any value that disagrees. Set `HOLOCUBE_DIR` if those screenshots aren't in `~/Downloads/holocube`.
+The fast tests cover quantity parsing, the colour/size decision (on strips drawn in code, so they need no screenshots), archive extraction (`tests/test_archive.py` builds its own tiny `.zip` / `.7z`, so it needs no 7-Zip program) and the answer-key export. Once `tests/fixtures/holocube_expected.json` exists — that is what `label_gems.py --export` writes — `tests/test_pipeline_fixture.py` runs the real pipeline over the hand-labelled screenshots and fails on any value that disagrees. Set `HOLOCUBE_DIR` if those screenshots aren't in `~/Downloads/holocube`.
 
 ## Use from Python
 

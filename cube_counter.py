@@ -19,7 +19,9 @@ Pipeline (each stage is its own function so you can edit/replace it freely):
 
 Install:
     pip install easyocr opencv-python numpy Pillow
-    pip install pyunpack patool        # only needed for .7z input (.zip needs nothing extra)
+    pip install py7zr                  # only needed for .7z input (.zip needs nothing extra)
+                                       # pyunpack + patool work too, but they need a 7-Zip
+                                       # binary (7z/7zz) on PATH; py7zr is pure Python
 
 Usage (any mix of zips, 7z files and folders; zips inside zips are opened too):
     python cube_counter.py Screenshots.zip
@@ -35,7 +37,7 @@ import re
 import shutil
 import sys
 import zipfile
-from collections import Counter, defaultdict
+from collections import Counter
 
 import cv2
 import numpy as np
@@ -557,15 +559,39 @@ def reset_dir(path):
 
 
 def extract_archive(archive_path, dest_dir):
-    """Extracts one archive into dest_dir. .zip uses the standard library;
-    anything else (.7z) goes through pyunpack/patool."""
+    """
+    Extracts one archive into dest_dir.
+
+    .zip uses the standard library. .7z goes through py7zr, which is pure
+    Python and therefore needs no 7-Zip program installed. pyunpack/patool is
+    only a fallback: it shells out to an external unpacker (7z, 7zz, unar, ...),
+    so it fails with "patool can not unpack" when none of those is on PATH.
+    """
     os.makedirs(dest_dir, exist_ok=True)
-    if archive_path.lower().endswith(".zip"):
+    lower = archive_path.lower()
+
+    if lower.endswith(".zip"):
         with zipfile.ZipFile(archive_path) as zf:
             zf.extractall(dest_dir)
-    else:
-        from pyunpack import Archive  # lazy: only needed for 7z etc.
-        Archive(archive_path).extractall(dest_dir)
+        return
+
+    if lower.endswith(".7z"):
+        try:
+            import py7zr
+        except ImportError:
+            py7zr = None
+        if py7zr is not None:
+            try:
+                with py7zr.SevenZipFile(archive_path) as zf:
+                    zf.extractall(dest_dir)
+                return
+            except Exception as e:
+                # Unsupported codec, password, corrupt file, ...: report it and
+                # let patool try, since it may use a binary that handles it.
+                print(f"  py7zr could not unpack it ({e}); trying pyunpack/patool...")
+
+    from pyunpack import Archive  # lazy: only needed when py7zr can't do it
+    Archive(archive_path).extractall(dest_dir)
 
 
 def expand_archives(sources, extract_dir=EXTRACT_DIR):
@@ -608,8 +634,12 @@ def expand_archives(sources, extract_dir=EXTRACT_DIR):
             extract_archive(archive, dest)
         except Exception as e:
             print(f"Failed to extract {archive}: {e}")
+            print("  .7z files need py7zr (pip install py7zr), or a 7-Zip program "
+                  "(7z / 7zz / unar) on PATH for pyunpack/patool to call.")
             continue
 
+        extracted = len(find_images(dest))
+        print(f"  Extracted {extracted} image(s) to {dest}")
         folders.append(dest)
         queue_archives_in(dest)  # nested archives
 
